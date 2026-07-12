@@ -49,15 +49,21 @@ function Toggle({ active, onChange }: { active: boolean; onChange: () => void })
   )
 }
 
+const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-transparent focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
+const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-1.5'
+
 export default function PromoCodesPage() {
   const [codes, setCodes] = useState<PromoCode[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
+  const [showEdit, setShowEdit] = useState<PromoCode | null>(null)
   const [showDelete, setShowDelete] = useState<PromoCode | null>(null)
   const [form, setForm] = useState(DEFAULT_FORM)
+  const [editForm, setEditForm] = useState<Partial<PromoCode>>({})
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
+  const [editError, setEditError] = useState('')
   const [deleteError, setDeleteError] = useState('')
 
   const fetchCodes = async () => {
@@ -72,8 +78,7 @@ export default function PromoCodesPage() {
   useEffect(() => { fetchCodes() }, [])
 
   const handleCreate = async () => {
-    setSaving(true)
-    setError('')
+    setSaving(true); setError('')
     try {
       const existing = new Set(codes.map(c => c.id))
       const code = generateCode(form.type, existing)
@@ -87,38 +92,39 @@ export default function PromoCodesPage() {
         ...(form.type === 'enterprise' && { institution_name: form.institution_name }),
       }
       await setDoc(doc(db, 'promo_codes', code), docData)
-      setShowCreate(false)
-      setForm(DEFAULT_FORM)
+      setShowCreate(false); setForm(DEFAULT_FORM)
       await fetchCodes()
-    } catch (e) {
-      setError((e as Error).message)
-    } finally {
-      setSaving(false)
-    }
+    } catch (e) { setError((e as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleEdit = async () => {
+    if (!showEdit) return
+    setSaving(true); setEditError('')
+    try {
+      await setDoc(doc(db, 'promo_codes', showEdit.id), editForm, { merge: true })
+      setShowEdit(null)
+      await fetchCodes()
+    } catch (e) { setEditError((e as Error).message) }
+    finally { setSaving(false) }
   }
 
   const toggleActive = async (code: PromoCode) => {
     try {
       await setDoc(doc(db, 'promo_codes', code.id), { active: !code.active }, { merge: true })
       setCodes(prev => prev.map(c => c.id === code.id ? { ...c, active: !c.active } : c))
-    } catch (e) {
-      alert('Failed to update: ' + (e as Error).message)
-    }
+    } catch (e) { alert('Failed to update: ' + (e as Error).message) }
   }
 
   const handleDelete = async () => {
     if (!showDelete) return
-    setDeleting(true)
-    setDeleteError('')
+    setDeleting(true); setDeleteError('')
     try {
       await deleteDoc(doc(db, 'promo_codes', showDelete.id))
       setShowDelete(null)
       await fetchCodes()
-    } catch (e) {
-      setDeleteError((e as Error).message)
-    } finally {
-      setDeleting(false)
-    }
+    } catch (e) { setDeleteError((e as Error).message) }
+    finally { setDeleting(false) }
   }
 
   return (
@@ -140,7 +146,7 @@ export default function PromoCodesPage() {
         <div className="text-center py-16 text-gray-400">Loading…</div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
-          <table className="w-full text-sm min-w-[640px]">
+          <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
                 <th className="text-left px-5 py-3 font-semibold">Code</th>
@@ -164,7 +170,7 @@ export default function PromoCodesPage() {
                   </td>
                   <td className="px-5 py-3.5 text-gray-600">{code.institution_name ?? '—'}</td>
                   <td className="px-5 py-3.5 text-gray-700">{code.discount_percent > 0 ? `${code.discount_percent}%` : '—'}</td>
-                  <td className="px-5 py-3.5 text-gray-700">
+                  <td className="px-5 py-3.5">
                     <span className="font-semibold text-[#2C3E50]">{code.used_count}</span>
                     <span className="text-gray-400"> / {code.usage_limit === -1 ? '∞' : code.usage_limit}</span>
                   </td>
@@ -172,12 +178,29 @@ export default function PromoCodesPage() {
                     <Toggle active={code.active} onChange={() => toggleActive(code)} />
                   </td>
                   <td className="px-5 py-3.5">
-                    <button
-                      onClick={() => { setShowDelete(code); setDeleteError('') }}
-                      className="text-red-500 hover:text-red-700 text-xs font-semibold transition px-2 py-1 rounded-lg hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setShowEdit(code)
+                          setEditForm({
+                            institution_name: code.institution_name ?? '',
+                            discount_percent: code.discount_percent,
+                            usage_limit: code.usage_limit,
+                            active: code.active,
+                          })
+                          setEditError('')
+                        }}
+                        className="text-[#1565C0] text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-50 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => { setShowDelete(code); setDeleteError('') }}
+                        className="text-red-500 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-red-50 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -194,63 +217,40 @@ export default function PromoCodesPage() {
         <Modal title="Create Promo Code" onClose={() => setShowCreate(false)}>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">Type</label>
-              <select
-                value={form.type}
+              <label className={labelCls}>Type</label>
+              <select value={form.type}
                 onChange={e => setForm(f => ({ ...f, type: e.target.value as 'enterprise' | 'customer' }))}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
-              >
+                className={inputCls}>
                 <option value="customer">Customer (discount)</option>
                 <option value="enterprise">Enterprise (referral, no discount)</option>
               </select>
             </div>
-
             {form.type === 'enterprise' && (
               <div>
-                <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">Institution Name</label>
-                <input
-                  type="text"
-                  value={form.institution_name}
+                <label className={labelCls}>Institution Name</label>
+                <input type="text" value={form.institution_name}
                   onChange={e => setForm(f => ({ ...f, institution_name: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
-                  placeholder="e.g. London Security College"
-                />
+                  className={inputCls} placeholder="e.g. London Security College" />
               </div>
             )}
-
             {form.type === 'customer' && (
               <div>
-                <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">
-                  Discount % <span className="text-gray-400 font-normal">(display only — actual price set in Play Console)</span>
-                </label>
-                <input
-                  type="number" min={0} max={100}
-                  value={form.discount_percent}
+                <label className={labelCls}>Discount % <span className="text-gray-400 font-normal text-xs">(display only)</span></label>
+                <input type="number" min={0} max={100} value={form.discount_percent}
                   onChange={e => setForm(f => ({ ...f, discount_percent: parseInt(e.target.value) || 0 }))}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
-                />
+                  className={inputCls} />
               </div>
             )}
-
             <div>
-              <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">
-                Usage Limit <span className="text-gray-400 font-normal">(-1 = unlimited)</span>
-              </label>
-              <input
-                type="number" min={-1}
-                value={form.usage_limit}
+              <label className={labelCls}>Usage Limit <span className="text-gray-400 font-normal text-xs">(-1 = unlimited)</span></label>
+              <input type="number" min={-1} value={form.usage_limit}
                 onChange={e => setForm(f => ({ ...f, usage_limit: parseInt(e.target.value) || -1 }))}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
-              />
+                className={inputCls} />
             </div>
-
             {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
-
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowCreate(false)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
-                Cancel
-              </button>
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
               <button onClick={handleCreate} disabled={saving}
                 className="flex-1 py-2.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
                 {saving ? 'Creating…' : 'Create Code'}
@@ -260,7 +260,76 @@ export default function PromoCodesPage() {
         </Modal>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Edit Modal */}
+      {showEdit && (
+        <Modal title={`Edit ${showEdit.id}`} onClose={() => setShowEdit(null)}>
+          <div className="space-y-4">
+            <div className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-500 font-mono">
+              Code: <span className="font-bold text-[#1565C0]">{showEdit.id}</span>
+              &nbsp;·&nbsp;Type: <span className="font-bold text-[#2C3E50]">{showEdit.type}</span>
+              &nbsp;·&nbsp;Used: <span className="font-bold text-[#2C3E50]">{showEdit.used_count}</span>
+            </div>
+
+            {showEdit.type === 'enterprise' && (
+              <div>
+                <label className={labelCls}>Institution Name</label>
+                <input type="text" value={editForm.institution_name ?? ''}
+                  onChange={e => setEditForm(f => ({ ...f, institution_name: e.target.value }))}
+                  className={inputCls} placeholder="e.g. London Security College" />
+              </div>
+            )}
+
+            {showEdit.type === 'customer' && (
+              <div>
+                <label className={labelCls}>Discount % <span className="text-gray-400 font-normal text-xs">(display only)</span></label>
+                <input type="number" min={0} max={100} value={editForm.discount_percent ?? 0}
+                  onChange={e => setEditForm(f => ({ ...f, discount_percent: parseInt(e.target.value) || 0 }))}
+                  className={inputCls} />
+              </div>
+            )}
+
+            <div>
+              <label className={labelCls}>Usage Limit <span className="text-gray-400 font-normal text-xs">(-1 = unlimited)</span></label>
+              <input type="number" min={-1} value={editForm.usage_limit ?? -1}
+                onChange={e => setEditForm(f => ({ ...f, usage_limit: parseInt(e.target.value) || -1 }))}
+                className={inputCls} />
+            </div>
+
+            <div>
+              <label className={labelCls}>Reset Used Count</label>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">Current: <strong>{showEdit.used_count}</strong></span>
+                <button
+                  onClick={() => setEditForm(f => ({ ...f, used_count: 0 }))}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition"
+                >
+                  Reset to 0
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
+              <span className="text-sm font-semibold text-[#2C3E50]">Active</span>
+              <Toggle
+                active={editForm.active ?? showEdit.active}
+                onChange={() => setEditForm(f => ({ ...f, active: !(f.active ?? showEdit.active) }))}
+              />
+            </div>
+
+            {editError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{editError}</p>}
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setShowEdit(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+              <button onClick={handleEdit} disabled={saving}
+                className="flex-1 py-2.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
+                {saving ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Delete Modal */}
       {showDelete && (
         <Modal title="Delete Promo Code" onClose={() => setShowDelete(null)} size="sm">
           <p className="text-sm text-gray-600 mb-5">
@@ -269,9 +338,7 @@ export default function PromoCodesPage() {
           {deleteError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl mb-4">{deleteError}</p>}
           <div className="flex gap-3">
             <button onClick={() => setShowDelete(null)}
-              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
-              Cancel
-            </button>
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
             <button onClick={handleDelete} disabled={deleting}
               className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition disabled:opacity-60">
               {deleting ? 'Deleting…' : 'Delete'}
