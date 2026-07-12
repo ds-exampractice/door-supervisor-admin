@@ -15,7 +15,6 @@ function Toggle({ active, onChange }: { active: boolean; onChange: () => void })
 export default function AppSettingsPage() {
   const [config, setConfig] = useState<VersionConfig>(DEFAULT)
   const [form, setForm] = useState<VersionConfig>(DEFAULT)
-  const [ann, setAnn] = useState<Announcement>(DEFAULT_ANN)
   const [annForm, setAnnForm] = useState<Announcement>(DEFAULT_ANN)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

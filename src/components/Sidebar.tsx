@@ -1,8 +1,9 @@
+import { type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import logo from '../assets/app-logo.png'
 
-interface NavItem { to: string; label: string; icon: JSX.Element }
+interface NavItem { to: string; label: string; icon: ReactNode }
 interface NavGroup { label: string; items: NavItem[] }
 
 const NAV: NavGroup[] = [

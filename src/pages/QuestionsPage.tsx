@@ -44,10 +44,6 @@ function AnswerBadge({ letter, isCorrect }: { letter: string; isCorrect: boolean
   )
 }
 
-function Toggle({ active, onChange }: { active: boolean; onChange: () => void }) {
-  return <button onClick={onChange} className={`ds-toggle${active ? ' on' : ''}`} aria-pressed={active} />
-}
-
 export default function QuestionsPage() {
   const [tab, setTab] = useState<'mock' | 'training'>('mock')
 
