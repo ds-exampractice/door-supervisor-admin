@@ -5,38 +5,8 @@ import { Link } from 'react-router-dom'
 
 const MODULES = ['PWPSI', 'PWDSPSI', 'ACMIPSI', 'APISPSI']
 
-interface StatCardProps {
-  label: string
-  value: string | number
-  sub?: string
-  color?: string
-  to?: string
-}
-
-function StatCard({ label, value, sub, color = 'text-[#2C3E50]', to }: StatCardProps) {
-  const inner = (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 hover:shadow-md transition">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</p>
-      <p className={`text-3xl font-bold ${color}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
-    </div>
-  )
-  return to ? <Link to={to}>{inner}</Link> : inner
-}
-
-interface FlaggedEntry {
-  questionId: string
-  moduleCode: string
-  question: string
-  count: number
-}
-
-interface RecentUser {
-  id: string
-  email: string
-  hasPurchased: boolean
-  createdAt?: { seconds: number }
-}
+interface FlaggedEntry { questionId: string; moduleCode: string; question: string; count: number }
+interface RecentUser  { id: string; email: string; hasPurchased: boolean; createdAt?: { seconds: number } }
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ users: 0, purchased: 0, activeCodes: 0, totalCodes: 0 })
@@ -54,19 +24,15 @@ export default function DashboardPage() {
       const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() } as RecentUser & { createdAt?: { seconds: number } }))
       const purchased = users.filter(u => u.hasPurchased).length
       const activeCodes = codesSnap.docs.filter(d => d.data().active).length
-
       setStats({ users: users.length, purchased, activeCodes, totalCodes: codesSnap.size })
-
       const sorted = [...users].sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
-      setRecentUsers(sorted.slice(0, 6))
+      setRecentUsers(sorted.slice(0, 8))
       setLoadingStats(false)
     }
 
     const loadFlagged = async () => {
-      // Aggregate flagged questions across all users for all modules
       const usersSnap = await getDocs(collection(db, 'Users'))
       const counts: Record<string, FlaggedEntry> = {}
-
       await Promise.all(
         usersSnap.docs.map(async userDoc => {
           await Promise.all(
@@ -78,25 +44,16 @@ export default function DashboardPage() {
                 snap.docs.forEach(d => {
                   const key = `${moduleCode}:${d.id}`
                   if (!counts[key]) {
-                    counts[key] = {
-                      questionId: d.id,
-                      moduleCode,
-                      question: (d.data().Question as string) ?? '',
-                      count: 0,
-                    }
+                    counts[key] = { questionId: d.id, moduleCode, question: (d.data().Question as string) ?? '', count: 0 }
                   }
                   counts[key].count++
                 })
-              } catch {
-                // user may have no flagged questions in this module
-              }
+              } catch { /* user may have no flags in this module */ }
             })
           )
         })
       )
-
-      const sorted = Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 10)
-      setFlagged(sorted)
+      setFlagged(Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 10))
       setLoadingFlagged(false)
     }
 
@@ -104,101 +61,130 @@ export default function DashboardPage() {
     loadFlagged()
   }, [])
 
-  const conversionRate = stats.users > 0 ? Math.round((stats.purchased / stats.users) * 100) : 0
+  const conversion = stats.users > 0 ? Math.round((stats.purchased / stats.users) * 100) : 0
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#2C3E50]">Dashboard</h1>
-        <p className="text-sm text-gray-400 mt-1">Overview of your platform</p>
+    <div className="page-content">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-sub">Platform overview</p>
+        </div>
       </div>
 
-      {/* Stats */}
-      {loadingStats ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 px-6 py-5 animate-pulse h-24" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Users" value={stats.users} sub="Registered accounts" to="/users" />
-          <StatCard
-            label="Purchased"
-            value={stats.purchased}
-            sub={`${conversionRate}% conversion`}
-            color="text-[#26A69A]"
-            to="/users"
-          />
-          <StatCard
-            label="Active Promo Codes"
-            value={stats.activeCodes}
-            sub={`${stats.totalCodes} total`}
-            color="text-[#1565C0]"
-            to="/promo-codes"
-          />
-          <StatCard
-            label="Free Users"
-            value={stats.users - stats.purchased}
-            sub="No purchase yet"
-            color="text-gray-500"
-          />
-        </div>
-      )}
+      {/* Stat cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
+        {loadingStats ? (
+          [1,2,3,4].map(i => (
+            <div key={i} className="stat-card" style={{ height: 90, opacity: 0.4 }} />
+          ))
+        ) : (
+          <>
+            <Link to="/users" style={{ textDecoration: 'none' }}>
+              <div className="stat-card" style={{ transition: 'box-shadow 0.15s', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-md)'}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-xs)'}
+              >
+                <div className="stat-label">Total Users</div>
+                <div className="stat-value">{stats.users}</div>
+                <div className="stat-sub">Registered accounts</div>
+              </div>
+            </Link>
+            <Link to="/users" style={{ textDecoration: 'none' }}>
+              <div className="stat-card" style={{ transition: 'box-shadow 0.15s', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-md)'}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-xs)'}
+              >
+                <div className="stat-label">Purchased</div>
+                <div className="stat-value" style={{ color: 'var(--teal)' }}>{stats.purchased}</div>
+                <div className="stat-sub">{conversion}% conversion</div>
+              </div>
+            </Link>
+            <Link to="/promo-codes" style={{ textDecoration: 'none' }}>
+              <div className="stat-card" style={{ transition: 'box-shadow 0.15s', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-md)'}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-xs)'}
+              >
+                <div className="stat-label">Active Promo Codes</div>
+                <div className="stat-value" style={{ color: 'var(--brand)' }}>{stats.activeCodes}</div>
+                <div className="stat-sub">{stats.totalCodes} total</div>
+              </div>
+            </Link>
+            <div className="stat-card">
+              <div className="stat-label">Free Users</div>
+              <div className="stat-value" style={{ color: 'var(--t3)' }}>{stats.users - stats.purchased}</div>
+              <div className="stat-sub">No purchase yet</div>
+            </div>
+          </>
+        )}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Bottom panels */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20 }}>
         {/* Recent signups */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#2C3E50]">Recent Signups</h2>
-            <Link to="/users" className="text-xs text-[#1565C0] font-semibold hover:underline">View all</Link>
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">Recent Signups</div>
+            <Link to="/users" style={{ fontSize: 12, fontWeight: 600, color: 'var(--brand-text)', textDecoration: 'none' }}>View all →</Link>
           </div>
-          <div className="divide-y divide-gray-50">
-            {loadingStats ? (
-              [...Array(4)].map((_, i) => <div key={i} className="px-6 py-3.5 animate-pulse h-12" />)
-            ) : recentUsers.length === 0 ? (
-              <p className="px-6 py-8 text-sm text-gray-400 text-center">No users yet</p>
-            ) : recentUsers.map(u => (
-              <div key={u.id} className="px-6 py-3.5 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-[#2C3E50] font-mono">{u.id}</p>
-                  <p className="text-xs text-gray-400">{u.email}</p>
+          {loadingStats
+            ? <div style={{ padding: '40px 0', display: 'flex', justifyContent: 'center' }}><div className="spinner" /></div>
+            : recentUsers.length === 0
+              ? <div className="empty-state"><div className="empty-state-sub">No signups yet</div></div>
+              : recentUsers.map((u, i) => (
+                <div key={u.id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '11px 20px',
+                  borderBottom: i < recentUsers.length - 1 ? '1px solid var(--border)' : 'none',
+                }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p className="mono" style={{ fontWeight: 700, color: 'var(--brand-text)', fontSize: 12 }}>{u.id}</p>
+                    <p style={{ fontSize: 12, color: 'var(--t4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{u.email}</p>
+                  </div>
+                  <span className={`badge ${u.hasPurchased ? 'badge-teal' : 'badge-gray'}`} style={{ marginLeft: 12, flexShrink: 0 }}>
+                    {u.hasPurchased ? 'Purchased' : 'Free'}
+                  </span>
                 </div>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full
-                  ${u.hasPurchased ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500'}`}>
-                  {u.hasPurchased ? 'Purchased' : 'Free'}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))
+          }
         </div>
 
-        {/* Most flagged questions */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#2C3E50]">Most Flagged Questions</h2>
-            <span className="text-xs text-gray-400">Flagged by users as confusing/incorrect</span>
+        {/* Most flagged */}
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">Most Flagged Questions</div>
+              <div className="card-sub">Flagged as confusing or incorrect by users</div>
+            </div>
           </div>
-          <div className="divide-y divide-gray-50">
-            {loadingFlagged ? (
-              [...Array(4)].map((_, i) => <div key={i} className="px-6 py-3.5 animate-pulse h-14" />)
-            ) : flagged.length === 0 ? (
-              <p className="px-6 py-8 text-sm text-gray-400 text-center">No flagged questions yet</p>
-            ) : flagged.map(f => (
-              <div key={`${f.moduleCode}:${f.questionId}`} className="px-6 py-3.5 flex items-center gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-50 flex items-center justify-center">
-                  <span className="text-xs font-bold text-red-500">{f.count}</span>
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-semibold text-[#1565C0] bg-blue-50 px-2 py-0.5 rounded-full">{f.moduleCode}</span>
-                    <span className="text-xs text-gray-400 font-mono">#{f.questionId}</span>
+          {loadingFlagged
+            ? <div style={{ padding: '40px 0', display: 'flex', justifyContent: 'center' }}><div className="spinner" /></div>
+            : flagged.length === 0
+              ? <div className="empty-state"><div className="empty-state-sub">No flagged questions yet</div></div>
+              : flagged.map((f, i) => (
+                <div key={`${f.moduleCode}:${f.questionId}`} style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '11px 20px',
+                  borderBottom: i < flagged.length - 1 ? '1px solid var(--border)' : 'none',
+                }}>
+                  <div style={{
+                    width: 30, height: 30, flexShrink: 0, borderRadius: '50%',
+                    background: 'var(--red-bg)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--red)', fontVariantNumeric: 'tabular-nums' }}>{f.count}</span>
                   </div>
-                  <p className="text-sm text-[#2C3E50] truncate">{f.question || '(question text not stored in flag)'}</p>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                      <span className="badge badge-brand">{f.moduleCode}</span>
+                      <span className="mono" style={{ color: 'var(--t4)', fontSize: 11 }}>#{f.questionId}</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: 'var(--t2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {f.question || '(question text not stored in flag)'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))
+          }
         </div>
       </div>
     </div>

@@ -2,40 +2,14 @@ import { useEffect, useState } from 'react'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 
-interface VersionConfig {
-  latestBuild: number
-  minBuild: number
-  storeUrl: string
-}
+interface VersionConfig { latestBuild: number; minBuild: number; storeUrl: string }
+interface Announcement { message: string; active: boolean; type: 'info' | 'warning' | 'maintenance' }
 
-interface Announcement {
-  message: string
-  active: boolean
-  type: 'info' | 'warning' | 'maintenance'
-}
-
-const DEFAULT: VersionConfig = { latestBuild: 0, minBuild: 0, storeUrl: '' }
-const DEFAULT_ANN: Announcement = { message: '', active: false, type: 'info' }
-
-function InfoCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-bold text-[#2C3E50]">{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-    </div>
-  )
-}
+const DEFAULT: VersionConfig     = { latestBuild: 0, minBuild: 0, storeUrl: '' }
+const DEFAULT_ANN: Announcement  = { message: '', active: false, type: 'info' }
 
 function Toggle({ active, onChange }: { active: boolean; onChange: () => void }) {
-  return (
-    <button onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-        ${active ? 'bg-[#1565C0]' : 'bg-gray-200'}`}>
-      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform
-        ${active ? 'translate-x-6' : 'translate-x-1'}`} />
-    </button>
-  )
+  return <button onClick={onChange} className={`ds-toggle${active ? ' on' : ''}`} aria-pressed={active} />
 }
 
 export default function AppSettingsPage() {
@@ -58,19 +32,10 @@ export default function AppSettingsPage() {
         getDoc(doc(db, 'app_config', 'version')),
         getDoc(doc(db, 'app_config', 'announcement')),
       ])
-      if (versionSnap.exists()) {
-        const data = versionSnap.data() as VersionConfig
-        setConfig(data); setForm(data)
-      }
-      if (annSnap.exists()) {
-        const data = annSnap.data() as Announcement
-        setAnn(data); setAnnForm(data)
-      }
-    } catch (e) {
-      setError((e as Error).message)
-    } finally {
-      setLoading(false)
-    }
+      if (versionSnap.exists()) { const d = versionSnap.data() as VersionConfig; setConfig(d); setForm(d) }
+      if (annSnap.exists())     { const d = annSnap.data() as Announcement;       setAnn(d);    setAnnForm(d) }
+    } catch (e) { setError((e as Error).message) }
+    finally { setLoading(false) }
   }
 
   useEffect(() => { fetchConfig() }, [])
@@ -79,8 +44,7 @@ export default function AppSettingsPage() {
     setSaving(true); setError(''); setSaved(false)
     try {
       await setDoc(doc(db, 'app_config', 'version'), form)
-      setConfig(form)
-      setSaved(true)
+      setConfig(form); setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (e) { setError((e as Error).message) }
     finally { setSaving(false) }
@@ -90,119 +54,209 @@ export default function AppSettingsPage() {
     setAnnSaving(true); setAnnError(''); setAnnSaved(false)
     try {
       await setDoc(doc(db, 'app_config', 'announcement'), annForm)
-      setAnn(annForm)
-      setAnnSaved(true)
+      setAnn(annForm); setAnnSaved(true)
       setTimeout(() => setAnnSaved(false), 3000)
     } catch (e) { setAnnError((e as Error).message) }
     finally { setAnnSaving(false) }
   }
 
-  // Derive what update status users on any given build would see
   const updatePreview = (build: number) => {
-    if (build < form.minBuild) return { label: 'Force update', color: 'text-red-600 bg-red-50 border-red-200' }
-    if (build < form.latestBuild) return { label: 'Optional update prompt', color: 'text-amber-600 bg-amber-50 border-amber-200' }
-    return { label: 'Up to date', color: 'text-green-600 bg-green-50 border-green-200' }
+    if (build < form.minBuild)    return { label: 'Force update',        cls: 'badge-red' }
+    if (build < form.latestBuild) return { label: 'Optional update',     cls: 'badge-amber' }
+    return                               { label: 'Up to date',          cls: 'badge-green' }
   }
 
-  const inputCls = 'w-full px-4 py-3.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
-  const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-2'
+  const annColor = annForm.type === 'warning' ? 'var(--amber)' : annForm.type === 'maintenance' ? 'var(--red)' : 'var(--brand)'
+
+  if (loading) {
+    return (
+      <div className="page-content">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+          <div className="spinner" />
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#2C3E50]">App Settings</h1>
-        <p className="text-sm text-gray-400 mt-1">Control version gating and update prompts shown to users</p>
+    <div className="page-content">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">App Settings</h1>
+          <p className="page-sub">Version gating, update prompts, and in-app announcements</p>
+        </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-16 text-gray-400">Loading…</div>
-      ) : (
-        <>
-          {/* Current live values */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <InfoCard label="Latest Build" value={config.latestBuild} sub="Shown as current version" />
-            <InfoCard label="Min Build" value={config.minBuild} sub="Below this = force update" />
-            <InfoCard
-              label="Current App"
-              value="1.5.1 (45)"
-              sub="Installed version code"
-            />
-          </div>
-
-          {/* Update preview */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 mb-8">
-            <h2 className="text-sm font-bold text-[#2C3E50] mb-4">Update Behaviour Preview</h2>
-            <div className="space-y-2">
-              {[form.minBuild - 1, form.minBuild, form.latestBuild - 1, form.latestBuild].filter((v, i, a) => v > 0 && a.indexOf(v) === i).map(build => {
-                const p = updatePreview(build)
-                return (
-                  <div key={build} className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm ${p.color}`}>
-                    <span className="font-mono font-semibold">Build {build}</span>
-                    <span className="font-semibold">{p.label}</span>
-                  </div>
-                )
-              })}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 720 }}>
+        {/* Version config card */}
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">Version Configuration</div>
+              <div className="card-sub">Controls which builds trigger update prompts</div>
             </div>
-            <p className="text-xs text-gray-400 mt-3">
-              Build &lt; minBuild → mandatory (cannot dismiss) · Build &lt; latestBuild → dismissable prompt · Otherwise → no prompt
-            </p>
           </div>
+          <div className="card-body">
+            {/* Live values summary */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
+              {[
+                { label: 'Latest Build', value: config.latestBuild, sub: 'Current release' },
+                { label: 'Min Build', value: config.minBuild, sub: 'Below → force update' },
+                { label: 'App Version', value: '1.5.2 (46)', sub: 'Currently installed' },
+              ].map(c => (
+                <div key={c.label} style={{
+                  padding: '12px 16px', borderRadius: 'var(--r2)',
+                  background: 'var(--bg-muted)', border: '1px solid var(--border)',
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--t4)', marginBottom: 6 }}>{c.label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--t1)', fontVariantNumeric: 'tabular-nums' }}>{c.value}</div>
+                  <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 3 }}>{c.sub}</div>
+                </div>
+              ))}
+            </div>
 
-          {/* Announcements */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-6 mb-6">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-sm font-bold text-[#2C3E50]">In-App Announcement</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Shown as a dismissable banner when users open the app</p>
+            {/* Update preview */}
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--t4)', marginBottom: 10 }}>
+                Update Behaviour Preview
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {[form.minBuild - 1, form.minBuild, form.latestBuild - 1, form.latestBuild]
+                  .filter((v, i, a) => v > 0 && a.indexOf(v) === i)
+                  .map(build => {
+                    const p = updatePreview(build)
+                    return (
+                      <div key={build} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 14px', borderRadius: 'var(--r2)',
+                        border: '1px solid var(--border)', background: 'var(--bg-surface)',
+                      }}>
+                        <span className="mono" style={{ fontWeight: 600, color: 'var(--t2)', fontSize: 13 }}>Build {build}</span>
+                        <span className={`badge ${p.cls}`}>{p.label}</span>
+                      </div>
+                    )
+                  })}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">{ann.active ? 'Live' : 'Off'}</span>
-                <Toggle active={annForm.active} onChange={() => setAnnForm(f => ({ ...f, active: !f.active }))} />
+              <p style={{ fontSize: 11, color: 'var(--t4)', marginTop: 10 }}>
+                build &lt; minBuild → mandatory (undismissable) &nbsp;·&nbsp; build &lt; latestBuild → optional prompt
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="form-section">
+              <div className="form-row-2">
+                <div className="form-field">
+                  <label className="form-label">Latest Build <span className="form-label-hint">(versionCode)</span></label>
+                  <input type="number" min={0} value={form.latestBuild}
+                    onChange={e => setForm(f => ({ ...f, latestBuild: parseInt(e.target.value) || 0 }))}
+                    className="form-input" />
+                </div>
+                <div className="form-field">
+                  <label className="form-label">Min Build <span className="form-label-hint">(below → force)</span></label>
+                  <input type="number" min={0} value={form.minBuild}
+                    onChange={e => setForm(f => ({ ...f, minBuild: parseInt(e.target.value) || 0 }))}
+                    className="form-input" />
+                </div>
+              </div>
+
+              {form.minBuild > form.latestBuild && (
+                <div className="alert alert-warning">
+                  Min build exceeds latest build — all users would be force-updated.
+                </div>
+              )}
+
+              <div className="form-field">
+                <label className="form-label">Play Store URL</label>
+                <input type="url" value={form.storeUrl}
+                  onChange={e => setForm(f => ({ ...f, storeUrl: e.target.value }))}
+                  className="form-input" placeholder="https://play.google.com/store/apps/details?id=…" />
+              </div>
+
+              {error && <div className="alert alert-error">{error}</div>}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving…' : 'Save Version Config'}
+                </button>
+                {saved && (
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Saved
+                  </span>
+                )}
               </div>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className={labelCls}>Type</label>
-                <div className="flex gap-2">
+          </div>
+        </div>
+
+        {/* Announcement card */}
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">In-App Announcement</div>
+              <div className="card-sub">Shown as a dismissable dialog when users open the app</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: annForm.active ? 'var(--green)' : 'var(--t4)', fontWeight: 600 }}>
+                {annForm.active ? 'Live' : 'Off'}
+              </span>
+              <Toggle active={annForm.active} onChange={() => setAnnForm(f => ({ ...f, active: !f.active }))} />
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="form-section">
+              <div className="form-field">
+                <label className="form-label">Type</label>
+                <div style={{ display: 'flex', gap: 8 }}>
                   {(['info', 'warning', 'maintenance'] as const).map(t => (
                     <button key={t} onClick={() => setAnnForm(f => ({ ...f, type: t }))}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold capitalize transition
-                        ${annForm.type === t
-                          ? t === 'info' ? 'bg-blue-600 text-white'
-                            : t === 'warning' ? 'bg-amber-500 text-white'
-                            : 'bg-red-600 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                      className="btn btn-sm"
+                      style={{
+                        background: annForm.type === t ? annColor : 'var(--bg-muted)',
+                        color: annForm.type === t ? '#fff' : 'var(--t3)',
+                        border: `1.5px solid ${annForm.type === t ? annColor : 'var(--border)'}`,
+                        textTransform: 'capitalize',
+                      }}>
                       {t}
                     </button>
                   ))}
                 </div>
               </div>
-              <div>
-                <label className={labelCls}>Message</label>
+
+              <div className="form-field">
+                <label className="form-label">Message</label>
                 <textarea rows={3} value={annForm.message}
                   onChange={e => setAnnForm(f => ({ ...f, message: e.target.value }))}
-                  className={`${inputCls} resize-none`}
+                  className="form-textarea"
                   placeholder="e.g. We're updating our question bank this weekend. Some questions may be temporarily unavailable." />
               </div>
+
               {annForm.active && annForm.message && (
-                <div className={`px-4 py-3 rounded-xl text-sm border
-                  ${annForm.type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800'
-                    : annForm.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800'
-                    : 'bg-red-50 border-red-200 text-red-800'}`}>
-                  <p className="font-semibold text-xs uppercase tracking-wide mb-1">Preview</p>
-                  {annForm.message}
+                <div style={{
+                  padding: '12px 16px', borderRadius: 'var(--r2)',
+                  borderLeft: `3px solid ${annColor}`,
+                  background: annForm.type === 'warning' ? 'var(--amber-bg)' : annForm.type === 'maintenance' ? 'var(--red-bg)' : 'var(--brand-subtle)',
+                  border: `1px solid ${annForm.type === 'warning' ? 'var(--amber-bd)' : annForm.type === 'maintenance' ? 'var(--red-bd)' : 'var(--brand-border)'}`,
+                }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: annColor, marginBottom: 5 }}>
+                    Preview — {annForm.type}
+                  </p>
+                  <p style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>{annForm.message}</p>
                 </div>
               )}
-              {annError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl border border-red-200">{annError}</p>}
-              <div className="flex items-center gap-4">
-                <button onClick={handleAnnSave} disabled={annSaving}
-                  className="px-7 py-3.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60 shadow-sm">
+
+              {annError && <div className="alert alert-error">{annError}</div>}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <button className="btn btn-primary" onClick={handleAnnSave} disabled={annSaving}>
                   {annSaving ? 'Saving…' : 'Save Announcement'}
                 </button>
                 {annSaved && (
-                  <span className="text-green-600 text-sm font-semibold flex items-center gap-1.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                     Saved
                   </span>
@@ -210,76 +264,8 @@ export default function AppSettingsPage() {
               </div>
             </div>
           </div>
-
-          {/* Edit form */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-6">
-            <h2 className="text-sm font-bold text-[#2C3E50] mb-5">Version Config</h2>
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>
-                    Latest Build <span className="text-gray-400 font-normal text-xs">(versionCode of newest release)</span>
-                  </label>
-                  <input
-                    type="number" min={0}
-                    value={form.latestBuild}
-                    onChange={e => setForm(f => ({ ...f, latestBuild: parseInt(e.target.value) || 0 }))}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className={labelCls}>
-                    Min Build <span className="text-gray-400 font-normal text-xs">(below this = force update)</span>
-                  </label>
-                  <input
-                    type="number" min={0}
-                    value={form.minBuild}
-                    onChange={e => setForm(f => ({ ...f, minBuild: parseInt(e.target.value) || 0 }))}
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-
-              {form.minBuild > form.latestBuild && (
-                <p className="text-amber-600 text-sm bg-amber-50 px-3 py-2 rounded-xl border border-amber-200">
-                  ⚠️ Min build is higher than latest build — all users would be force-updated.
-                </p>
-              )}
-
-              <div>
-                <label className={labelCls}>Play Store URL</label>
-                <input
-                  type="url"
-                  value={form.storeUrl}
-                  onChange={e => setForm(f => ({ ...f, storeUrl: e.target.value }))}
-                  className={inputCls}
-                  placeholder="https://play.google.com/store/apps/details?id=..."
-                />
-              </div>
-
-              {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl border border-red-200">{error}</p>}
-
-              <div className="flex items-center gap-4 pt-1">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-7 py-3.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60 shadow-sm"
-                >
-                  {saving ? 'Saving…' : 'Save Changes'}
-                </button>
-                {saved && (
-                  <span className="text-green-600 text-sm font-semibold flex items-center gap-1.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Saved
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   )
 }

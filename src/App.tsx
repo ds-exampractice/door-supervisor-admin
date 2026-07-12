@@ -15,8 +15,8 @@ function ProtectedLayout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
-        <div className="w-8 h-8 border-4 border-[#1565C0] border-t-transparent rounded-full animate-spin" />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)' }}>
+        <div className="spinner" style={{ width: 28, height: 28, borderWidth: 3 }} />
       </div>
     )
   }
@@ -24,31 +24,35 @@ function ProtectedLayout() {
   if (!user || !isAdmin) return <Navigate to="/login" replace />
 
   return (
-    <div className="flex min-h-screen">
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="app-main">
         {/* Mobile top bar */}
-        <header className="md:hidden bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-30">
+        <header className="mobile-topbar">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.7)', padding: 6, borderRadius: 6,
+              display: 'flex',
+            }}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="text-sm font-bold text-[#2C3E50]">DS Exam Admin</span>
+          <span className="nav-logo-name">DS Exam Admin</span>
         </header>
 
-        <main className="flex-1 overflow-auto bg-[#F5F7FA]">
+        <main style={{ flex: 1, overflow: 'auto', background: 'var(--bg-base)' }}>
           <Routes>
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard"   element={<DashboardPage />} />
             <Route path="/promo-codes" element={<PromoCodesPage />} />
-            <Route path="/questions" element={<QuestionsPage />} />
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/settings" element={<AppSettingsPage />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/questions"   element={<QuestionsPage />} />
+            <Route path="/users"       element={<UsersPage />} />
+            <Route path="/settings"    element={<AppSettingsPage />} />
+            <Route path="*"            element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
       </div>
@@ -61,16 +65,16 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
-        <div className="w-8 h-8 border-4 border-[#1565C0] border-t-transparent rounded-full animate-spin" />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)' }}>
+        <div className="spinner" style={{ width: 28, height: 28, borderWidth: 3 }} />
       </div>
     )
   }
 
   return (
     <Routes>
-      <Route path="/login" element={user && isAdmin ? <Navigate to="/promo-codes" replace /> : <LoginPage />} />
-      <Route path="/*" element={<ProtectedLayout />} />
+      <Route path="/login" element={user && isAdmin ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/*"     element={<ProtectedLayout />} />
     </Routes>
   )
 }

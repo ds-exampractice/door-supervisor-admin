@@ -30,20 +30,8 @@ function formatDate(ts?: Timestamp): string {
 }
 
 function Toggle({ active, onChange }: { active: boolean; onChange: () => void }) {
-  return (
-    <button
-      onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-        ${active ? 'bg-[#26A69A]' : 'bg-gray-200'}`}
-    >
-      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform
-        ${active ? 'translate-x-6' : 'translate-x-1'}`} />
-    </button>
-  )
+  return <button onClick={onChange} className={`ds-toggle${active ? ' on' : ''}`} aria-pressed={active} />
 }
-
-const inputCls = 'w-full px-4 py-3.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
-const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-2'
 
 export default function UsersPage() {
   const [users, setUsers] = useState<AppUser[]>([])
@@ -115,8 +103,7 @@ export default function UsersPage() {
     const rows = [
       ['Username', 'Email', 'Has Purchased', 'Password Set', 'Promo Code', 'Last Login'],
       ...users.map(u => [
-        u.id,
-        u.email ?? '',
+        u.id, u.email ?? '',
         u.hasPurchased ? 'Yes' : 'No',
         u.hasSetPassword ? 'Yes' : 'No',
         u.promo_code_used ?? '',
@@ -127,194 +114,209 @@ export default function UsersPage() {
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url
-    a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
+    a.href = url; a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
     URL.revokeObjectURL(url)
   }
 
+  const purchased = users.filter(u => u.hasPurchased).length
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="page-content">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-[#2C3E50]">Users</h1>
-          <p className="text-sm text-gray-400 mt-1">{users.length} registered · {users.filter(u => u.hasPurchased).length} purchased</p>
+          <h1 className="page-title">Users</h1>
+          <p className="page-sub">{users.length} registered &nbsp;·&nbsp; {purchased} purchased ({users.length > 0 ? Math.round((purchased / users.length) * 100) : 0}%)</p>
         </div>
-        <div className="flex gap-2 items-center">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by email, username…"
-            className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-sm w-full sm:w-64
-                       focus:outline-none focus:ring-2 focus:ring-[#1565C0] shadow-sm"
-          />
-          <button
-            onClick={exportCSV}
-            className="px-5 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition shadow-sm flex items-center gap-2 flex-shrink-0"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <svg
+              style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--t4)', pointerEvents: 'none' }}
+              width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            CSV
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search users…"
+              className="form-input"
+              style={{ paddingLeft: 32, width: 220 }}
+            />
+          </div>
+          <button className="btn btn-secondary" onClick={exportCSV}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export CSV
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400">Loading users…</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+          <div className="spinner" />
+        </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
-          <table className="w-full text-sm min-w-[700px]">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
-                <th className="text-left px-6 py-4 font-semibold">Username</th>
-                <th className="text-left px-6 py-4 font-semibold">Email</th>
-                <th className="text-left px-6 py-4 font-semibold">Purchased</th>
-                <th className="text-left px-6 py-4 font-semibold">Password</th>
-                <th className="text-left px-6 py-4 font-semibold">Promo</th>
-                <th className="text-left px-6 py-4 font-semibold">Last Login</th>
-                <th className="text-left px-6 py-4 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(user => (
-                <>
-                  <tr key={user.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition">
-                    <td className="px-6 py-5 font-mono text-xs text-[#1565C0] font-semibold">{user.id}</td>
-                    <td className="px-6 py-5 text-gray-600 text-sm max-w-[160px] truncate">{user.email}</td>
-                    <td className="px-6 py-5">
-                      <Toggle active={user.hasPurchased} onChange={() => togglePurchased(user)} />
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className={`text-xs font-semibold px-3 py-1.5 rounded-full
-                        ${user.hasSetPassword ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}`}>
-                        {user.hasSetPassword ? 'Set' : 'Pending'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      {user.promo_code_used
-                        ? <span className="font-mono text-xs text-[#26A69A] font-semibold">{user.promo_code_used}</span>
-                        : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="px-6 py-5 text-sm text-gray-500">{formatDate(user.lastLogin)}</td>
-                    <td className="px-6 py-5">
-                      <div className="flex gap-2 items-center">
-                        <button
-                          onClick={() => {
-                            setEditUser(user)
-                            setEditForm({
-                              username: user.id,
-                              email: user.email ?? '',
-                              hasPurchased: user.hasPurchased,
-                              hasSetPassword: user.hasSetPassword,
-                            })
-                            setEditError('')
-                          }}
-                          className="text-[#1565C0] text-sm font-semibold px-3 py-2 rounded-lg hover:bg-blue-50 border border-blue-100 transition"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => setExpandedDevices(expandedDevices === user.id ? null : user.id)}
-                          className="text-sm text-gray-500 font-semibold px-3 py-2 rounded-lg hover:bg-gray-100 border border-gray-200 transition flex items-center gap-1.5"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          {user.devices?.length ?? 0} devices
-                        </button>
+        <div className="card">
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Purchased</th>
+                  <th>Password</th>
+                  <th>Promo</th>
+                  <th>Last Login</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(user => (
+                  <>
+                    <tr key={user.id}>
+                      <td>
+                        <span className="mono" style={{ color: 'var(--brand-text)', fontWeight: 700 }}>{user.id}</span>
+                      </td>
+                      <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--t3)' }}>
+                        {user.email}
+                      </td>
+                      <td>
+                        <Toggle active={user.hasPurchased} onChange={() => togglePurchased(user)} />
+                      </td>
+                      <td>
+                        <span className={`badge ${user.hasSetPassword ? 'badge-green' : 'badge-amber'}`}>
+                          {user.hasSetPassword ? 'Set' : 'Pending'}
+                        </span>
+                      </td>
+                      <td>
+                        {user.promo_code_used
+                          ? <span className="mono badge badge-teal">{user.promo_code_used}</span>
+                          : <span style={{ color: 'var(--t4)' }}>—</span>}
+                      </td>
+                      <td style={{ color: 'var(--t4)', fontSize: 12 }}>{formatDate(user.lastLogin)}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button
+                            className="btn btn-sm btn-ghost-blue"
+                            onClick={() => {
+                              setEditUser(user)
+                              setEditForm({ username: user.id, email: user.email ?? '', hasPurchased: user.hasPurchased, hasSetPassword: user.hasSetPassword })
+                              setEditError('')
+                            }}
+                          >Edit</button>
+                          <button
+                            className="btn btn-sm btn-ghost"
+                            onClick={() => setExpandedDevices(expandedDevices === user.id ? null : user.id)}
+                            style={{ gap: 4 }}
+                          >
+                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            {user.devices?.length ?? 0}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {expandedDevices === user.id && (
+                      <tr key={`${user.id}-devices`}>
+                        <td colSpan={7} style={{ padding: 0 }}>
+                          <div className="row-detail">
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--t4)', marginBottom: 10 }}>
+                              Registered Devices
+                            </p>
+                            {(user.devices?.length ?? 0) === 0 ? (
+                              <p style={{ fontSize: 13, color: 'var(--t4)' }}>No devices registered</p>
+                            ) : (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                                {user.devices?.map(device => (
+                                  <div key={device.id} className="device-card">
+                                    <div>
+                                      <div className="device-name">{device.deviceName}</div>
+                                      <div className="device-meta">{device.platform} · Last: {formatDate(device.lastLoginAt)}</div>
+                                    </div>
+                                    <button
+                                      className="btn btn-sm btn-ghost-red"
+                                      style={{ marginLeft: 12 }}
+                                      onClick={() => setShowDeleteDevice({ userId: user.id, device })}
+                                    >Revoke</button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="empty-state">
+                        <div className="empty-state-title">{search ? 'No users match your search' : 'No users found'}</div>
                       </div>
                     </td>
                   </tr>
-
-                  {expandedDevices === user.id && (
-                    <tr key={`${user.id}-devices`} className="bg-slate-50/60 border-b border-gray-100">
-                      <td colSpan={7} className="px-8 py-4">
-                        {(user.devices?.length ?? 0) === 0 ? (
-                          <p className="text-xs text-gray-400">No devices registered</p>
-                        ) : (
-                          <div className="flex flex-wrap gap-3">
-                            {user.devices?.map(device => (
-                              <div key={device.id} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 min-w-[200px]">
-                                <div>
-                                  <p className="text-xs font-semibold text-[#2C3E50]">{device.deviceName}</p>
-                                  <p className="text-xs text-gray-400 mt-0.5">{device.platform}</p>
-                                  <p className="text-xs text-gray-400">Last: {formatDate(device.lastLoginAt)}</p>
-                                </div>
-                                <button
-                                  onClick={() => setShowDeleteDevice({ userId: user.id, device })}
-                                  className="ml-4 text-xs text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded-lg hover:bg-red-50 transition"
-                                >
-                                  Revoke
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </>
-              ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">
-                  {search ? 'No users match your search' : 'No users found'}
-                </td></tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* Edit User Modal */}
       {editUser && (
-        <Modal title={`Edit User — ${editUser.id}`} onClose={() => setEditUser(null)}>
-          <div className="space-y-4">
-            <div className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-500">
-              Joined: {formatDate(editUser.createdAt)} · Last login: {formatDate(editUser.lastLogin)}
-              {editUser.promo_code_used && <> · Promo: <span className="font-mono font-bold text-[#26A69A]">{editUser.promo_code_used}</span></>}
+        <Modal title={`Edit User`} onClose={() => setEditUser(null)}>
+          <div className="form-section">
+            <div style={{
+              padding: '10px 14px', borderRadius: 'var(--r2)',
+              background: 'var(--bg-muted)', border: '1px solid var(--border)',
+              fontSize: 12, color: 'var(--t3)',
+            }}>
+              Joined {formatDate(editUser.createdAt)} &nbsp;·&nbsp; Last login {formatDate(editUser.lastLogin)}
+              {editUser.promo_code_used && <> &nbsp;·&nbsp; Promo: <span className="mono" style={{ fontWeight: 700, color: 'var(--teal)' }}>{editUser.promo_code_used}</span></>}
             </div>
 
-            <div>
-              <label className={labelCls}>Username (document ID)</label>
-              <input value={editForm.username} readOnly
-                className={`${inputCls} opacity-60 cursor-not-allowed`} />
-              <p className="text-xs text-gray-400 mt-1">Username cannot be changed — it is the Firestore document ID.</p>
+            <div className="form-field">
+              <label className="form-label">Username (document ID)</label>
+              <input value={editForm.username} readOnly className="form-input" />
+              <p className="form-hint">Username cannot be changed — it is the Firestore document ID.</p>
             </div>
 
-            <div>
-              <label className={labelCls}>Email</label>
-              <input type="email" value={editForm.email}
+            <div className="form-field">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                value={editForm.email}
                 onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                className={inputCls} />
+                className="form-input"
+              />
             </div>
 
-            <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-gray-50 border border-gray-100">
+            <div className="toggle-row">
               <div>
-                <p className="text-sm font-semibold text-[#2C3E50]">Has Purchased</p>
-                <p className="text-xs text-gray-400 mt-0.5">Grants full app access</p>
+                <div className="toggle-row-label">Has Purchased</div>
+                <div className="toggle-row-sub">Grants full app access</div>
               </div>
               <Toggle active={editForm.hasPurchased} onChange={() => setEditForm(f => ({ ...f, hasPurchased: !f.hasPurchased }))} />
             </div>
 
-            <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-gray-50 border border-gray-100">
+            <div className="toggle-row">
               <div>
-                <p className="text-sm font-semibold text-[#2C3E50]">Has Set Password</p>
-                <p className="text-xs text-gray-400 mt-0.5">Whether the user completed password setup</p>
+                <div className="toggle-row-label">Has Set Password</div>
+                <div className="toggle-row-sub">Whether the user completed password setup</div>
               </div>
               <Toggle active={editForm.hasSetPassword} onChange={() => setEditForm(f => ({ ...f, hasSetPassword: !f.hasSetPassword }))} />
             </div>
 
-            {editError && <p className="text-red-600 text-sm bg-red-50 px-4 py-3 rounded-xl">{editError}</p>}
+            {editError && <div className="alert alert-error">{editError}</div>}
 
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setEditUser(null)}
-                className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
-              <button onClick={handleEditSave} disabled={saving}
-                className="flex-1 py-3.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
+            <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setEditUser(null)}>Cancel</button>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleEditSave} disabled={saving}>
                 {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
@@ -325,17 +327,15 @@ export default function UsersPage() {
       {/* Revoke Device Modal */}
       {showDeleteDevice && (
         <Modal title="Revoke Device" onClose={() => setShowDeleteDevice(null)} size="sm">
-          <p className="text-sm text-gray-600 mb-2">
-            Revoke <span className="font-semibold text-[#2C3E50]">{showDeleteDevice.device.deviceName}</span>?
+          <p style={{ fontSize: 14, color: 'var(--t2)', marginBottom: 6, lineHeight: 1.6 }}>
+            Revoke <strong>{showDeleteDevice.device.deviceName}</strong>?
           </p>
-          <p className="text-xs text-gray-400 mb-5">
+          <p style={{ fontSize: 13, color: 'var(--t4)', marginBottom: 20 }}>
             The user's device slot will be freed and they can register a new device on next login.
           </p>
-          <div className="flex gap-3">
-            <button onClick={() => setShowDeleteDevice(null)}
-              className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
-            <button onClick={revokeDevice}
-              className="flex-1 py-3.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition">Revoke</button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowDeleteDevice(null)}>Cancel</button>
+            <button className="btn btn-danger" style={{ flex: 1 }} onClick={revokeDevice}>Revoke</button>
           </div>
         </Modal>
       )}
