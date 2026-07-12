@@ -32,7 +32,7 @@ export default function AppSettingsPage() {
         getDoc(doc(db, 'app_config', 'announcement')),
       ])
       if (versionSnap.exists()) { const d = versionSnap.data() as VersionConfig; setConfig(d); setForm(d) }
-      if (annSnap.exists())     { const d = annSnap.data() as Announcement;       setAnn(d);    setAnnForm(d) }
+      if (annSnap.exists())     { const d = annSnap.data() as Announcement;       setAnnForm(d) }
     } catch (e) { setError((e as Error).message) }
     finally { setLoading(false) }
   }
@@ -53,7 +53,7 @@ export default function AppSettingsPage() {
     setAnnSaving(true); setAnnError(''); setAnnSaved(false)
     try {
       await setDoc(doc(db, 'app_config', 'announcement'), annForm)
-      setAnn(annForm); setAnnSaved(true)
+      setAnnSaved(true)
       setTimeout(() => setAnnSaved(false), 3000)
     } catch (e) { setAnnError((e as Error).message) }
     finally { setAnnSaving(false) }
