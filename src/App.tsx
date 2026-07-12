@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar'
 import PromoCodesPage from './pages/PromoCodesPage'
 import QuestionsPage from './pages/QuestionsPage'
 import UsersPage from './pages/UsersPage'
+import AppSettingsPage from './pages/AppSettingsPage'
 
 function ProtectedLayout() {
   const { user, isAdmin, loading } = useAuth()
@@ -44,6 +45,7 @@ function ProtectedLayout() {
             <Route path="/promo-codes" element={<PromoCodesPage />} />
             <Route path="/questions" element={<QuestionsPage />} />
             <Route path="/users" element={<UsersPage />} />
+            <Route path="/settings" element={<AppSettingsPage />} />
             <Route path="*" element={<Navigate to="/promo-codes" replace />} />
           </Routes>
         </main>

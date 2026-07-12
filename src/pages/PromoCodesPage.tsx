@@ -36,6 +36,19 @@ const DEFAULT_FORM = {
   usage_limit: -1,
 }
 
+function Toggle({ active, onChange }: { active: boolean; onChange: () => void }) {
+  return (
+    <button
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
+        ${active ? 'bg-[#1565C0]' : 'bg-gray-200'}`}
+    >
+      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform
+        ${active ? 'translate-x-6' : 'translate-x-1'}`} />
+    </button>
+  )
+}
+
 export default function PromoCodesPage() {
   const [codes, setCodes] = useState<PromoCode[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,7 +56,9 @@ export default function PromoCodesPage() {
   const [showDelete, setShowDelete] = useState<PromoCode | null>(null)
   const [form, setForm] = useState(DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
+  const [deleteError, setDeleteError] = useState('')
 
   const fetchCodes = async () => {
     setLoading(true)
@@ -83,19 +98,31 @@ export default function PromoCodesPage() {
   }
 
   const toggleActive = async (code: PromoCode) => {
-    await setDoc(doc(db, 'promo_codes', code.id), { active: !code.active }, { merge: true })
-    setCodes(prev => prev.map(c => c.id === code.id ? { ...c, active: !c.active } : c))
+    try {
+      await setDoc(doc(db, 'promo_codes', code.id), { active: !code.active }, { merge: true })
+      setCodes(prev => prev.map(c => c.id === code.id ? { ...c, active: !c.active } : c))
+    } catch (e) {
+      alert('Failed to update: ' + (e as Error).message)
+    }
   }
 
   const handleDelete = async () => {
     if (!showDelete) return
-    await deleteDoc(doc(db, 'promo_codes', showDelete.id))
-    setShowDelete(null)
-    await fetchCodes()
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      await deleteDoc(doc(db, 'promo_codes', showDelete.id))
+      setShowDelete(null)
+      await fetchCodes()
+    } catch (e) {
+      setDeleteError((e as Error).message)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#2C3E50]">Promo Codes</h1>
@@ -112,8 +139,8 @@ export default function PromoCodesPage() {
       {loading ? (
         <div className="text-center py-16 text-gray-400">Loading…</div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
                 <th className="text-left px-5 py-3 font-semibold">Code</th>
@@ -127,33 +154,27 @@ export default function PromoCodesPage() {
             </thead>
             <tbody>
               {codes.map(code => (
-                <tr key={code.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                  <td className="px-5 py-3 font-mono font-semibold text-[#1565C0]">{code.id}</td>
-                  <td className="px-5 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold
-                      ${code.type === 'enterprise' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-[#26A69A]'}`}>
+                <tr key={code.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition">
+                  <td className="px-5 py-3.5 font-mono font-semibold text-[#1565C0] tracking-wider">{code.id}</td>
+                  <td className="px-5 py-3.5">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold
+                      ${code.type === 'enterprise' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'}`}>
                       {code.type}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-gray-600">{code.institution_name ?? '—'}</td>
-                  <td className="px-5 py-3">{code.discount_percent > 0 ? `${code.discount_percent}%` : '—'}</td>
-                  <td className="px-5 py-3">
-                    {code.used_count} / {code.usage_limit === -1 ? '∞' : code.usage_limit}
+                  <td className="px-5 py-3.5 text-gray-600">{code.institution_name ?? '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-700">{code.discount_percent > 0 ? `${code.discount_percent}%` : '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-700">
+                    <span className="font-semibold text-[#2C3E50]">{code.used_count}</span>
+                    <span className="text-gray-400"> / {code.usage_limit === -1 ? '∞' : code.usage_limit}</span>
                   </td>
-                  <td className="px-5 py-3">
-                    <button
-                      onClick={() => toggleActive(code)}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors
-                        ${code.active ? 'bg-[#1565C0]' : 'bg-gray-300'}`}
-                    >
-                      <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform
-                        ${code.active ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
-                    </button>
+                  <td className="px-5 py-3.5">
+                    <Toggle active={code.active} onChange={() => toggleActive(code)} />
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-5 py-3.5">
                     <button
-                      onClick={() => setShowDelete(code)}
-                      className="text-red-500 hover:text-red-700 text-xs font-semibold transition"
+                      onClick={() => { setShowDelete(code); setDeleteError('') }}
+                      className="text-red-500 hover:text-red-700 text-xs font-semibold transition px-2 py-1 rounded-lg hover:bg-red-50"
                     >
                       Delete
                     </button>
@@ -161,7 +182,7 @@ export default function PromoCodesPage() {
                 </tr>
               ))}
               {codes.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-10 text-gray-400">No promo codes yet</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-gray-400">No promo codes yet</td></tr>
               )}
             </tbody>
           </table>
@@ -203,9 +224,7 @@ export default function PromoCodesPage() {
                   Discount % <span className="text-gray-400 font-normal">(display only — actual price set in Play Console)</span>
                 </label>
                 <input
-                  type="number"
-                  min={0}
-                  max={100}
+                  type="number" min={0} max={100}
                   value={form.discount_percent}
                   onChange={e => setForm(f => ({ ...f, discount_percent: parseInt(e.target.value) || 0 }))}
                   className="w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
@@ -218,28 +237,22 @@ export default function PromoCodesPage() {
                 Usage Limit <span className="text-gray-400 font-normal">(-1 = unlimited)</span>
               </label>
               <input
-                type="number"
-                min={-1}
+                type="number" min={-1}
                 value={form.usage_limit}
                 onChange={e => setForm(f => ({ ...f, usage_limit: parseInt(e.target.value) || -1 }))}
                 className="w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
               />
             </div>
 
-            {error && <p className="text-red-600 text-sm">{error}</p>}
+            {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
 
             <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => setShowCreate(false)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition"
-              >
+              <button onClick={() => setShowCreate(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
                 Cancel
               </button>
-              <button
-                onClick={handleCreate}
-                disabled={saving}
-                className="flex-1 py-2.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60"
-              >
+              <button onClick={handleCreate} disabled={saving}
+                className="flex-1 py-2.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
                 {saving ? 'Creating…' : 'Create Code'}
               </button>
             </div>
@@ -251,21 +264,17 @@ export default function PromoCodesPage() {
       {showDelete && (
         <Modal title="Delete Promo Code" onClose={() => setShowDelete(null)} size="sm">
           <p className="text-sm text-gray-600 mb-5">
-            Are you sure you want to delete <span className="font-mono font-semibold text-[#1565C0]">{showDelete.id}</span>?
-            This cannot be undone.
+            Delete <span className="font-mono font-semibold text-[#1565C0]">{showDelete.id}</span>? This cannot be undone.
           </p>
+          {deleteError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl mb-4">{deleteError}</p>}
           <div className="flex gap-3">
-            <button
-              onClick={() => setShowDelete(null)}
-              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition"
-            >
+            <button onClick={() => setShowDelete(null)}
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
               Cancel
             </button>
-            <button
-              onClick={handleDelete}
-              className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition"
-            >
-              Delete
+            <button onClick={handleDelete} disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition disabled:opacity-60">
+              {deleting ? 'Deleting…' : 'Delete'}
             </button>
           </div>
         </Modal>
