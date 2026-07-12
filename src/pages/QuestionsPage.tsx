@@ -106,7 +106,7 @@ export default function QuestionsPage() {
 
   useEffect(() => { if (tab === 'mock') fetchMock() }, [mockModule, mockExam, tab])
   useEffect(() => { if (tab === 'training') fetchChapters() }, [trainModule, tab])
-  useEffect(() => { if (tab === 'training' && chapters.length > 0) fetchTraining() }, [trainChapter, tab])
+  useEffect(() => { if (tab === 'training' && chapters.length > 0) fetchTraining() }, [trainChapter, trainModule, tab, chapters])
 
   const saveMock = async () => {
     setSaving(true); setModalError('')
