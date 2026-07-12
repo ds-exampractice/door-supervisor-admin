@@ -49,8 +49,8 @@ function Toggle({ active, onChange }: { active: boolean; onChange: () => void })
   )
 }
 
-const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-transparent focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
-const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-1.5'
+const inputCls = 'w-full px-4 py-3.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
+const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-2'
 
 export default function PromoCodesPage() {
   const [codes, setCodes] = useState<PromoCode[]>([])
@@ -136,7 +136,7 @@ export default function PromoCodesPage() {
         </div>
         <button
           onClick={() => { setShowCreate(true); setForm(DEFAULT_FORM); setError('') }}
-          className="px-5 py-2.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition shadow-sm"
+          className="px-6 py-3 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition shadow-sm"
         >
           + New Code
         </button>
@@ -149,35 +149,35 @@ export default function PromoCodesPage() {
           <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
-                <th className="text-left px-5 py-3 font-semibold">Code</th>
-                <th className="text-left px-5 py-3 font-semibold">Type</th>
-                <th className="text-left px-5 py-3 font-semibold">Institution</th>
-                <th className="text-left px-5 py-3 font-semibold">Discount</th>
-                <th className="text-left px-5 py-3 font-semibold">Used / Limit</th>
-                <th className="text-left px-5 py-3 font-semibold">Active</th>
-                <th className="text-left px-5 py-3 font-semibold">Actions</th>
+                <th className="text-left px-6 py-4 font-semibold">Code</th>
+                <th className="text-left px-6 py-4 font-semibold">Type</th>
+                <th className="text-left px-6 py-4 font-semibold">Institution</th>
+                <th className="text-left px-6 py-4 font-semibold">Discount</th>
+                <th className="text-left px-6 py-4 font-semibold">Used / Limit</th>
+                <th className="text-left px-6 py-4 font-semibold">Active</th>
+                <th className="text-left px-6 py-4 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {codes.map(code => (
-                <tr key={code.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition">
-                  <td className="px-5 py-3.5 font-mono font-semibold text-[#1565C0] tracking-wider">{code.id}</td>
-                  <td className="px-5 py-3.5">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold
+                <tr key={code.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition">
+                  <td className="px-6 py-5 font-mono font-semibold text-[#1565C0] tracking-wider">{code.id}</td>
+                  <td className="px-6 py-5">
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-semibold
                       ${code.type === 'enterprise' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'}`}>
                       {code.type}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-600">{code.institution_name ?? '—'}</td>
-                  <td className="px-5 py-3.5 text-gray-700">{code.discount_percent > 0 ? `${code.discount_percent}%` : '—'}</td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-6 py-5 text-gray-600">{code.institution_name ?? '—'}</td>
+                  <td className="px-6 py-5 text-gray-700">{code.discount_percent > 0 ? `${code.discount_percent}%` : '—'}</td>
+                  <td className="px-6 py-5">
                     <span className="font-semibold text-[#2C3E50]">{code.used_count}</span>
                     <span className="text-gray-400"> / {code.usage_limit === -1 ? '∞' : code.usage_limit}</span>
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-6 py-5">
                     <Toggle active={code.active} onChange={() => toggleActive(code)} />
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-6 py-5">
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
@@ -190,13 +190,13 @@ export default function PromoCodesPage() {
                           })
                           setEditError('')
                         }}
-                        className="text-[#1565C0] text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-50 transition"
+                        className="text-[#1565C0] text-sm font-semibold px-3 py-2 rounded-lg hover:bg-blue-50 border border-blue-100 transition"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => { setShowDelete(code); setDeleteError('') }}
-                        className="text-red-500 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-red-50 transition"
+                        className="text-red-500 text-sm font-semibold px-3 py-2 rounded-lg hover:bg-red-50 border border-red-100 transition"
                       >
                         Delete
                       </button>
@@ -247,12 +247,12 @@ export default function PromoCodesPage() {
                 onChange={e => setForm(f => ({ ...f, usage_limit: parseInt(e.target.value) || -1 }))}
                 className={inputCls} />
             </div>
-            {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
+            {error && <p className="text-red-600 text-sm bg-red-50 px-4 py-3 rounded-xl">{error}</p>}
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowCreate(false)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
               <button onClick={handleCreate} disabled={saving}
-                className="flex-1 py-2.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
+                className="flex-1 py-3.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
                 {saving ? 'Creating…' : 'Create Code'}
               </button>
             </div>
@@ -316,12 +316,12 @@ export default function PromoCodesPage() {
               />
             </div>
 
-            {editError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{editError}</p>}
+            {editError && <p className="text-red-600 text-sm bg-red-50 px-4 py-3 rounded-xl">{editError}</p>}
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowEdit(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
               <button onClick={handleEdit} disabled={saving}
-                className="flex-1 py-2.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
+                className="flex-1 py-3.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
                 {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
@@ -335,12 +335,12 @@ export default function PromoCodesPage() {
           <p className="text-sm text-gray-600 mb-5">
             Delete <span className="font-mono font-semibold text-[#1565C0]">{showDelete.id}</span>? This cannot be undone.
           </p>
-          {deleteError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl mb-4">{deleteError}</p>}
+          {deleteError && <p className="text-red-600 text-sm bg-red-50 px-4 py-3 rounded-xl mb-4">{deleteError}</p>}
           <div className="flex gap-3">
             <button onClick={() => setShowDelete(null)}
-              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+              className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
             <button onClick={handleDelete} disabled={deleting}
-              className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition disabled:opacity-60">
+              className="flex-1 py-3.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition disabled:opacity-60">
               {deleting ? 'Deleting…' : 'Delete'}
             </button>
           </div>

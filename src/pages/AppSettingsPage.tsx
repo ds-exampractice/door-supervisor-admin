@@ -104,8 +104,8 @@ export default function AppSettingsPage() {
     return { label: 'Up to date', color: 'text-green-600 bg-green-50 border-green-200' }
   }
 
-  const inputCls = 'w-full px-4 py-3 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-transparent focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
-  const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-1.5'
+  const inputCls = 'w-full px-4 py-3.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
+  const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-2'
 
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto">
@@ -166,7 +166,7 @@ export default function AppSettingsPage() {
                 <div className="flex gap-2">
                   {(['info', 'warning', 'maintenance'] as const).map(t => (
                     <button key={t} onClick={() => setAnnForm(f => ({ ...f, type: t }))}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition
+                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold capitalize transition
                         ${annForm.type === t
                           ? t === 'info' ? 'bg-blue-600 text-white'
                             : t === 'warning' ? 'bg-amber-500 text-white'
@@ -196,7 +196,7 @@ export default function AppSettingsPage() {
               {annError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl border border-red-200">{annError}</p>}
               <div className="flex items-center gap-4">
                 <button onClick={handleAnnSave} disabled={annSaving}
-                  className="px-6 py-2.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60 shadow-sm">
+                  className="px-7 py-3.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60 shadow-sm">
                   {annSaving ? 'Saving…' : 'Save Announcement'}
                 </button>
                 {annSaved && (
@@ -263,7 +263,7 @@ export default function AppSettingsPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-6 py-2.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60 shadow-sm"
+                  className="px-7 py-3.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60 shadow-sm"
                 >
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>

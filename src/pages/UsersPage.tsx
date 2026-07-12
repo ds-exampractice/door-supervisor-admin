@@ -42,8 +42,8 @@ function Toggle({ active, onChange }: { active: boolean; onChange: () => void })
   )
 }
 
-const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-transparent focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
-const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-1.5'
+const inputCls = 'w-full px-4 py-3.5 rounded-xl bg-[#F5F7FA] text-sm text-[#2C3E50] border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1565C0] focus:border-[#1565C0] transition'
+const labelCls = 'block text-sm font-semibold text-[#2C3E50] mb-2'
 
 export default function UsersPage() {
   const [users, setUsers] = useState<AppUser[]>([])
@@ -146,12 +146,12 @@ export default function UsersPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by email, username…"
-            className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm w-full sm:w-64
+            className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-sm w-full sm:w-64
                        focus:outline-none focus:ring-2 focus:ring-[#1565C0] shadow-sm"
           />
           <button
             onClick={exportCSV}
-            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition shadow-sm flex items-center gap-2 flex-shrink-0"
+            className="px-5 py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition shadow-sm flex items-center gap-2 flex-shrink-0"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -169,37 +169,37 @@ export default function UsersPage() {
           <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
-                <th className="text-left px-5 py-3 font-semibold">Username</th>
-                <th className="text-left px-5 py-3 font-semibold">Email</th>
-                <th className="text-left px-5 py-3 font-semibold">Purchased</th>
-                <th className="text-left px-5 py-3 font-semibold">Password</th>
-                <th className="text-left px-5 py-3 font-semibold">Promo</th>
-                <th className="text-left px-5 py-3 font-semibold">Last Login</th>
-                <th className="text-left px-5 py-3 font-semibold">Actions</th>
+                <th className="text-left px-6 py-4 font-semibold">Username</th>
+                <th className="text-left px-6 py-4 font-semibold">Email</th>
+                <th className="text-left px-6 py-4 font-semibold">Purchased</th>
+                <th className="text-left px-6 py-4 font-semibold">Password</th>
+                <th className="text-left px-6 py-4 font-semibold">Promo</th>
+                <th className="text-left px-6 py-4 font-semibold">Last Login</th>
+                <th className="text-left px-6 py-4 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(user => (
                 <>
-                  <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                    <td className="px-5 py-3.5 font-mono text-xs text-[#1565C0] font-semibold">{user.id}</td>
-                    <td className="px-5 py-3.5 text-gray-600 text-xs max-w-[160px] truncate">{user.email}</td>
-                    <td className="px-5 py-3.5">
+                  <tr key={user.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition">
+                    <td className="px-6 py-5 font-mono text-xs text-[#1565C0] font-semibold">{user.id}</td>
+                    <td className="px-6 py-5 text-gray-600 text-sm max-w-[160px] truncate">{user.email}</td>
+                    <td className="px-6 py-5">
                       <Toggle active={user.hasPurchased} onChange={() => togglePurchased(user)} />
                     </td>
-                    <td className="px-5 py-3.5">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full
+                    <td className="px-6 py-5">
+                      <span className={`text-xs font-semibold px-3 py-1.5 rounded-full
                         ${user.hasSetPassword ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}`}>
                         {user.hasSetPassword ? 'Set' : 'Pending'}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-6 py-5">
                       {user.promo_code_used
                         ? <span className="font-mono text-xs text-[#26A69A] font-semibold">{user.promo_code_used}</span>
                         : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-5 py-3.5 text-xs text-gray-500">{formatDate(user.lastLogin)}</td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-6 py-5 text-sm text-gray-500">{formatDate(user.lastLogin)}</td>
+                    <td className="px-6 py-5">
                       <div className="flex gap-2 items-center">
                         <button
                           onClick={() => {
@@ -212,19 +212,19 @@ export default function UsersPage() {
                             })
                             setEditError('')
                           }}
-                          className="text-[#1565C0] text-xs font-semibold px-2 py-1 rounded-lg hover:bg-blue-50 transition"
+                          className="text-[#1565C0] text-sm font-semibold px-3 py-2 rounded-lg hover:bg-blue-50 border border-blue-100 transition"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => setExpandedDevices(expandedDevices === user.id ? null : user.id)}
-                          className="text-xs text-gray-500 font-semibold px-2 py-1 rounded-lg hover:bg-gray-100 transition flex items-center gap-1"
+                          className="text-sm text-gray-500 font-semibold px-3 py-2 rounded-lg hover:bg-gray-100 border border-gray-200 transition flex items-center gap-1.5"
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                               d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                           </svg>
-                          {user.devices?.length ?? 0}
+                          {user.devices?.length ?? 0} devices
                         </button>
                       </div>
                     </td>
@@ -308,13 +308,13 @@ export default function UsersPage() {
               <Toggle active={editForm.hasSetPassword} onChange={() => setEditForm(f => ({ ...f, hasSetPassword: !f.hasSetPassword }))} />
             </div>
 
-            {editError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{editError}</p>}
+            {editError && <p className="text-red-600 text-sm bg-red-50 px-4 py-3 rounded-xl">{editError}</p>}
 
             <div className="flex gap-3 pt-2">
               <button onClick={() => setEditUser(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
               <button onClick={handleEditSave} disabled={saving}
-                className="flex-1 py-2.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
+                className="flex-1 py-3.5 rounded-xl bg-[#1565C0] text-white text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60">
                 {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
@@ -333,9 +333,9 @@ export default function UsersPage() {
           </p>
           <div className="flex gap-3">
             <button onClick={() => setShowDeleteDevice(null)}
-              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+              className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
             <button onClick={revokeDevice}
-              className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition">Revoke</button>
+              className="flex-1 py-3.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition">Revoke</button>
           </div>
         </Modal>
       )}
