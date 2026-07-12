@@ -8,7 +8,14 @@ interface VersionConfig {
   storeUrl: string
 }
 
+interface Announcement {
+  message: string
+  active: boolean
+  type: 'info' | 'warning' | 'maintenance'
+}
+
 const DEFAULT: VersionConfig = { latestBuild: 0, minBuild: 0, storeUrl: '' }
+const DEFAULT_ANN: Announcement = { message: '', active: false, type: 'info' }
 
 function InfoCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -20,22 +27,44 @@ function InfoCard({ label, value, sub }: { label: string; value: string | number
   )
 }
 
+function Toggle({ active, onChange }: { active: boolean; onChange: () => void }) {
+  return (
+    <button onClick={onChange}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
+        ${active ? 'bg-[#1565C0]' : 'bg-gray-200'}`}>
+      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform
+        ${active ? 'translate-x-6' : 'translate-x-1'}`} />
+    </button>
+  )
+}
+
 export default function AppSettingsPage() {
   const [config, setConfig] = useState<VersionConfig>(DEFAULT)
   const [form, setForm] = useState<VersionConfig>(DEFAULT)
+  const [ann, setAnn] = useState<Announcement>(DEFAULT_ANN)
+  const [annForm, setAnnForm] = useState<Announcement>(DEFAULT_ANN)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [annSaving, setAnnSaving] = useState(false)
+  const [annSaved, setAnnSaved] = useState(false)
   const [error, setError] = useState('')
+  const [annError, setAnnError] = useState('')
 
   const fetchConfig = async () => {
     setLoading(true)
     try {
-      const snap = await getDoc(doc(db, 'app_config', 'version'))
-      if (snap.exists()) {
-        const data = snap.data() as VersionConfig
-        setConfig(data)
-        setForm(data)
+      const [versionSnap, annSnap] = await Promise.all([
+        getDoc(doc(db, 'app_config', 'version')),
+        getDoc(doc(db, 'app_config', 'announcement')),
+      ])
+      if (versionSnap.exists()) {
+        const data = versionSnap.data() as VersionConfig
+        setConfig(data); setForm(data)
+      }
+      if (annSnap.exists()) {
+        const data = annSnap.data() as Announcement
+        setAnn(data); setAnnForm(data)
       }
     } catch (e) {
       setError((e as Error).message)
@@ -47,19 +76,25 @@ export default function AppSettingsPage() {
   useEffect(() => { fetchConfig() }, [])
 
   const handleSave = async () => {
-    setSaving(true)
-    setError('')
-    setSaved(false)
+    setSaving(true); setError(''); setSaved(false)
     try {
       await setDoc(doc(db, 'app_config', 'version'), form)
       setConfig(form)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    } catch (e) {
-      setError((e as Error).message)
-    } finally {
-      setSaving(false)
-    }
+    } catch (e) { setError((e as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleAnnSave = async () => {
+    setAnnSaving(true); setAnnError(''); setAnnSaved(false)
+    try {
+      await setDoc(doc(db, 'app_config', 'announcement'), annForm)
+      setAnn(annForm)
+      setAnnSaved(true)
+      setTimeout(() => setAnnSaved(false), 3000)
+    } catch (e) { setAnnError((e as Error).message) }
+    finally { setAnnSaving(false) }
   }
 
   // Derive what update status users on any given build would see
@@ -113,9 +148,72 @@ export default function AppSettingsPage() {
             </p>
           </div>
 
+          {/* Announcements */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-6 mb-6">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-sm font-bold text-[#2C3E50]">In-App Announcement</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Shown as a dismissable banner when users open the app</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">{ann.active ? 'Live' : 'Off'}</span>
+                <Toggle active={annForm.active} onChange={() => setAnnForm(f => ({ ...f, active: !f.active }))} />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className={labelCls}>Type</label>
+                <div className="flex gap-2">
+                  {(['info', 'warning', 'maintenance'] as const).map(t => (
+                    <button key={t} onClick={() => setAnnForm(f => ({ ...f, type: t }))}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition
+                        ${annForm.type === t
+                          ? t === 'info' ? 'bg-blue-600 text-white'
+                            : t === 'warning' ? 'bg-amber-500 text-white'
+                            : 'bg-red-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Message</label>
+                <textarea rows={3} value={annForm.message}
+                  onChange={e => setAnnForm(f => ({ ...f, message: e.target.value }))}
+                  className={`${inputCls} resize-none`}
+                  placeholder="e.g. We're updating our question bank this weekend. Some questions may be temporarily unavailable." />
+              </div>
+              {annForm.active && annForm.message && (
+                <div className={`px-4 py-3 rounded-xl text-sm border
+                  ${annForm.type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800'
+                    : annForm.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800'
+                    : 'bg-red-50 border-red-200 text-red-800'}`}>
+                  <p className="font-semibold text-xs uppercase tracking-wide mb-1">Preview</p>
+                  {annForm.message}
+                </div>
+              )}
+              {annError && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl border border-red-200">{annError}</p>}
+              <div className="flex items-center gap-4">
+                <button onClick={handleAnnSave} disabled={annSaving}
+                  className="px-6 py-2.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition disabled:opacity-60 shadow-sm">
+                  {annSaving ? 'Saving…' : 'Save Announcement'}
+                </button>
+                {annSaved && (
+                  <span className="text-green-600 text-sm font-semibold flex items-center gap-1.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Saved
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Edit form */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-6">
-            <h2 className="text-sm font-bold text-[#2C3E50] mb-5">Edit Version Config</h2>
+            <h2 className="text-sm font-bold text-[#2C3E50] mb-5">Version Config</h2>
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>

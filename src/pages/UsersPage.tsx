@@ -111,6 +111,28 @@ export default function UsersPage() {
     u.username?.toLowerCase().includes(search.toLowerCase())
   )
 
+  const exportCSV = () => {
+    const rows = [
+      ['Username', 'Email', 'Has Purchased', 'Password Set', 'Promo Code', 'Last Login'],
+      ...users.map(u => [
+        u.id,
+        u.email ?? '',
+        u.hasPurchased ? 'Yes' : 'No',
+        u.hasSetPassword ? 'Yes' : 'No',
+        u.promo_code_used ?? '',
+        formatDate(u.lastLogin),
+      ]),
+    ]
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -118,14 +140,26 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-[#2C3E50]">Users</h1>
           <p className="text-sm text-gray-400 mt-1">{users.length} registered · {users.filter(u => u.hasPurchased).length} purchased</p>
         </div>
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by email, username…"
-          className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm w-full sm:w-72
-                     focus:outline-none focus:ring-2 focus:ring-[#1565C0] shadow-sm"
-        />
+        <div className="flex gap-2 items-center">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by email, username…"
+            className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm w-full sm:w-64
+                       focus:outline-none focus:ring-2 focus:ring-[#1565C0] shadow-sm"
+          />
+          <button
+            onClick={exportCSV}
+            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition shadow-sm flex items-center gap-2 flex-shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            CSV
+          </button>
+        </div>
       </div>
 
       {loading ? (
