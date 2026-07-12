@@ -4,34 +4,34 @@
    Design Tokens
 ───────────────────────────────────────────── */
 :root {
-  /* Surfaces */
-  --bg-base:    #F1F5F9;
+  /* Surfaces — matches app STYLE_GUIDE: #F5F7FA page bg, #FFFFFF cards */
+  --bg-base:    #F5F7FA;
   --bg-surface: #FFFFFF;
-  --bg-muted:   #F8FAFC;
-  --bg-hover:   #F1F5F9;
+  --bg-muted:   #F5F7FA;
+  --bg-hover:   #EBF0F5;
 
   /* Sidebar */
-  --nav-bg:            #0F172A;
+  --nav-bg:            #1A2744;
   --nav-border:        rgba(255,255,255,0.07);
   --nav-item-hover:    rgba(255,255,255,0.06);
-  --nav-item-active:   rgba(37,99,235,0.14);
-  --nav-active-border: #3B82F6;
+  --nav-item-active:   rgba(21,101,192,0.18);
+  --nav-active-border: #1976D2;
   --nav-text:          rgba(255,255,255,0.5);
   --nav-text-hover:    rgba(255,255,255,0.9);
   --nav-text-active:   #FFFFFF;
   --nav-label:         rgba(255,255,255,0.22);
 
-  /* Brand */
-  --brand:        #2563EB;
-  --brand-hover:  #1D4ED8;
-  --brand-subtle: #EFF6FF;
-  --brand-text:   #1D4ED8;
-  --brand-border: #BFDBFE;
+  /* Brand — matches app STYLE_GUIDE: #1565C0 primary, #1976D2 light */
+  --brand:        #1565C0;
+  --brand-hover:  #1256A8;
+  --brand-subtle: #E3F2FD;
+  --brand-text:   #1565C0;
+  --brand-border: #90CAF9;
 
-  /* Text */
-  --t1: #0F172A;
-  --t2: #334155;
-  --t3: #64748B;
+  /* Text — matches app STYLE_GUIDE: #2C3E50 dark text */
+  --t1: #2C3E50;
+  --t2: #3D5166;
+  --t3: #637080;
   --t4: #94A3B8;
 
   /* Borders */
@@ -44,7 +44,8 @@
   --red:    #DC2626; --red-bg:    #FEF2F2; --red-bd:    #FECACA;
   --sky:    #0284C7; --sky-bg:    #F0F9FF; --sky-bd:    #BAE6FD;
   --purple: #7C3AED; --purple-bg: #F5F3FF; --purple-bd: #DDD6FE;
-  --teal:   #0F766E; --teal-bg:   #F0FDFA; --teal-bd:   #99F6E4;
+  /* Teal — matches app STYLE_GUIDE: #26A69A (correct answers / success) */
+  --teal:   #26A69A; --teal-bg:   #E0F2F1; --teal-bd:   #80CBC4;
 
   /* Elevation */
   --shadow-xs: 0 1px 2px rgba(15,23,42,0.04);
