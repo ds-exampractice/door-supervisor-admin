@@ -22,7 +22,7 @@ function ProtectedLayout() {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 overflow-auto bg-[#F5F7FA]">
+      <main className="flex-1 overflow-auto bg-[#F5F7FA] min-w-0">
         <Routes>
           <Route path="/promo-codes" element={<PromoCodesPage />} />
           <Route path="/questions" element={<QuestionsPage />} />

@@ -95,22 +95,22 @@ export default function PromoCodesPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-8 max-w-6xl mx-auto">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-xl font-bold text-[#2C3E50]">Promo Codes</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{codes.length} codes total</p>
+          <h1 className="text-2xl font-bold text-[#2C3E50]">Promo Codes</h1>
+          <p className="text-sm text-gray-400 mt-1">{codes.length} code{codes.length !== 1 ? 's' : ''} total</p>
         </div>
         <button
           onClick={() => { setShowCreate(true); setForm(DEFAULT_FORM); setError('') }}
-          className="px-4 py-2 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition"
+          className="px-5 py-2.5 bg-[#1565C0] text-white rounded-xl text-sm font-semibold hover:bg-[#1251A3] transition shadow-sm"
         >
           + New Code
         </button>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading…</div>
+        <div className="text-center py-16 text-gray-400">Loading…</div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <table className="w-full text-sm">

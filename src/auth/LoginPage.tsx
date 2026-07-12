@@ -6,6 +6,7 @@ import {
   setPersistence,
 } from 'firebase/auth'
 import { auth } from '../firebase'
+import logo from '../assets/app-logo.png'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -47,21 +48,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#1565C0] mb-4 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-[#2C3E50]">DS Exam Admin</h1>
-          <p className="text-sm text-gray-500 mt-1">Sign in to manage the platform</p>
+          <img src={logo} alt="DS Exam Practice" className="w-20 h-20 rounded-2xl shadow-lg mx-auto mb-5" />
+          <h1 className="text-2xl font-bold text-[#2C3E50]">DS Exam Practice</h1>
+          <p className="text-sm text-gray-500 mt-1">Admin Panel · Restricted Access</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">
@@ -128,9 +124,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
-          DS Exam Practice · Admin Panel · Restricted Access
-        </p>
+
       </div>
     </div>
   )
