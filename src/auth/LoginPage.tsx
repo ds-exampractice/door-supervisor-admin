@@ -51,7 +51,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src={logo} alt="DS Exam Practice" className="w-20 h-20 rounded-2xl shadow-lg mx-auto mb-5" />
+          <img src={logo} alt="DS Exam Practice" className="w-20 h-20 rounded-2xl shadow-lg block mx-auto mb-5" />
           <h1 className="text-2xl font-bold text-[#2C3E50]">DS Exam Practice</h1>
           <p className="text-sm text-gray-500 mt-1">Admin Panel · Restricted Access</p>
         </div>
