@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import LoginPage from './auth/LoginPage'
@@ -8,6 +9,7 @@ import UsersPage from './pages/UsersPage'
 
 function ProtectedLayout() {
   const { user, isAdmin, loading } = useAuth()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (loading) {
     return (
@@ -21,15 +23,31 @@ function ProtectedLayout() {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 overflow-auto bg-[#F5F7FA] min-w-0">
-        <Routes>
-          <Route path="/promo-codes" element={<PromoCodesPage />} />
-          <Route path="/questions" element={<QuestionsPage />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="*" element={<Navigate to="/promo-codes" replace />} />
-        </Routes>
-      </main>
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile top bar */}
+        <header className="md:hidden bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-30">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <span className="text-sm font-bold text-[#2C3E50]">DS Exam Admin</span>
+        </header>
+
+        <main className="flex-1 overflow-auto bg-[#F5F7FA]">
+          <Routes>
+            <Route path="/promo-codes" element={<PromoCodesPage />} />
+            <Route path="/questions" element={<QuestionsPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="*" element={<Navigate to="/promo-codes" replace />} />
+          </Routes>
+        </main>
+      </div>
     </div>
   )
 }

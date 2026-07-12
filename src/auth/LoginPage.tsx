@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import {
   signInWithEmailAndPassword,
   browserLocalPersistence,
@@ -15,18 +15,13 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
-      // Persistence: local survives browser close, session clears on tab close
       await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence)
       const credential = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password)
-
-      // Verify admin claim — AuthContext also checks this, but catching it here
-      // lets us show a specific "Access denied" message instead of a blank redirect
       const token = await credential.user.getIdTokenResult()
       if (token.claims.admin !== true) {
         await auth.signOut()
@@ -47,48 +42,53 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
-      <div className="w-full max-w-md px-4">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <img src={logo} alt="DS Exam Practice" className="w-20 h-20 rounded-2xl shadow-lg block mx-auto mb-5" />
-          <h1 className="text-2xl font-bold text-[#2C3E50]">DS Exam Practice</h1>
-          <p className="text-sm text-gray-500 mt-1">Admin Panel · Restricted Access</p>
+    <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Left panel — brand */}
+      <div className="bg-[#1565C0] md:w-1/2 flex flex-col items-center justify-center px-10 py-14 md:py-0">
+        <img src={logo} alt="DS Exam Practice" className="w-24 h-24 rounded-2xl shadow-xl mb-6" />
+        <h1 className="text-white text-3xl font-bold tracking-tight text-center">DS Exam Practice</h1>
+        <p className="text-white/60 text-sm mt-2 text-center">Door Supervisor Licence Preparation</p>
+        <div className="mt-10 hidden md:flex flex-col gap-3 w-full max-w-xs">
+          {['Manage promo codes', 'Edit questions', 'Oversee users'].map(f => (
+            <div key={f} className="flex items-center gap-3 text-white/70 text-sm">
+              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white text-xs flex-shrink-0">✓</span>
+              {f}
+            </div>
+          ))}
         </div>
+      </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8">
+      {/* Right panel — form */}
+      <div className="md:w-1/2 flex items-center justify-center bg-[#F5F7FA] px-6 py-12">
+        <div className="w-full max-w-sm">
+          <h2 className="text-2xl font-bold text-[#2C3E50] mb-1">Admin sign in</h2>
+          <p className="text-sm text-gray-400 mb-8">Restricted to authorised accounts only.</p>
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">
-                Email address
-              </label>
+              <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">Email address</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full px-4 py-3 rounded-xl bg-[#F5F7FA] border border-transparent
-                           focus:outline-none focus:border-[#1565C0] focus:bg-white transition
-                           text-[#2C3E50] text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-[#2C3E50] text-sm
+                           focus:outline-none focus:border-[#1565C0] focus:ring-2 focus:ring-[#1565C0]/20 transition"
                 placeholder="admin@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">
-                Password
-              </label>
+              <label className="block text-sm font-semibold text-[#2C3E50] mb-1.5">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="w-full px-4 py-3 rounded-xl bg-[#F5F7FA] border border-transparent
-                           focus:outline-none focus:border-[#1565C0] focus:bg-white transition
-                           text-[#2C3E50] text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-[#2C3E50] text-sm
+                           focus:outline-none focus:border-[#1565C0] focus:ring-2 focus:ring-[#1565C0]/20 transition"
                 placeholder="••••••••"
               />
             </div>
@@ -101,9 +101,7 @@ export default function LoginPage() {
                 onChange={e => setRemember(e.target.checked)}
                 className="w-4 h-4 accent-[#1565C0] rounded"
               />
-              <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
-                Remember me
-              </label>
+              <label htmlFor="remember" className="text-sm text-gray-500 cursor-pointer">Remember me</label>
             </div>
 
             {error && (
@@ -116,15 +114,12 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full py-3 rounded-xl bg-[#1565C0] text-white font-semibold text-sm
-                         hover:bg-[#1251A3] active:bg-[#0D3D80] transition disabled:opacity-60
-                         disabled:cursor-not-allowed"
+                         hover:bg-[#1251A3] active:bg-[#0D3D80] transition disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
         </div>
-
-
       </div>
     </div>
   )

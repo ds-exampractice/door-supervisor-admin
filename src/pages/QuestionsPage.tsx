@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   collection, getDocs, setDoc, deleteDoc, doc, addDoc,
-  query, where, orderBy,
+  query, where,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import Modal from '../components/Modal'
@@ -103,17 +103,21 @@ export default function QuestionsPage() {
     if (list.length > 0) setTrainChapter(list[0].chapterNumber)
   }
 
-  // Fetch training questions for selected module + chapter
+  // Fetch training questions for selected module + chapter.
+  // Client-side sort avoids requiring a composite Firestore index on
+  // (moduleCode, chapterNumber, sectionNumber).
   const fetchTraining = async () => {
     setTrainLoading(true)
     const q = query(
       collection(db, 'Training Questions'),
       where('moduleCode', '==', trainModule),
       where('chapterNumber', '==', trainChapter),
-      orderBy('sectionNumber'),
     )
     const snap = await getDocs(q)
-    setTrainQuestions(snap.docs.map(d => ({ id: d.id, ...d.data() } as TrainingQuestion)))
+    const list = snap.docs
+      .map(d => ({ id: d.id, ...d.data() } as TrainingQuestion))
+      .sort((a, b) => (a.sectionNumber ?? 0) - (b.sectionNumber ?? 0))
+    setTrainQuestions(list)
     setTrainLoading(false)
   }
 
